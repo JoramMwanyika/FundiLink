@@ -66,7 +66,7 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/book">
+                <Link href="/login">
                   <Button size="lg" className="text-lg px-8 py-4 bg-primary hover:bg-primary/90 group">
                     Book a Service
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -182,7 +182,7 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={`/book?category=${category.id}`}>
+                  <Link href="/login">
                     <Button className="w-full bg-primary hover:bg-primary/90 group">
                       Book Now
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -232,7 +232,7 @@ export default function HomePage() {
             Join thousands of satisfied customers who trust FundiLink for their service needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/book">
+            <Link href="/login">
               <Button size="lg" className="text-lg px-8 py-4 bg-primary hover:bg-primary/90">
                 Book a Service Now
               </Button>

@@ -305,22 +305,6 @@ export default function LoginPage() {
                 Sign up here
               </Link>
             </div>
-
-            {/* Demo Accounts */}
-            <div className="border-t border-border/50 pt-4">
-              <p className="text-xs text-muted-foreground text-center mb-3">Demo Accounts (Development)</p>
-              <div className="space-y-2 text-xs">
-                <div className="bg-muted/50 p-2 rounded text-center">
-                  <strong>Client:</strong> client@demo.com / password
-                </div>
-                <div className="bg-muted/50 p-2 rounded text-center">
-                  <strong>Fundi:</strong> fundi@demo.com / password
-                </div>
-                <div className="bg-muted/50 p-2 rounded text-center">
-                  <strong>Admin:</strong> admin@fundilink.co.ke / password
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

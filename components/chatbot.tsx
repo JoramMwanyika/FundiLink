@@ -82,10 +82,12 @@ export function Chatbot() {
     setIsLoading(true)
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('fundilink_token') : null;
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           message: userMessage,
@@ -133,10 +135,12 @@ export function Chatbot() {
     setIsBooking(true)
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('fundilink_token') : null;
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           action: 'create_booking',
