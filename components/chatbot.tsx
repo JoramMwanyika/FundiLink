@@ -274,59 +274,134 @@ export function Chatbot() {
 
             {/* Booking Form */}
             {showBookingForm && (
-              <div className="border-t p-4 bg-muted/50">
-                <h4 className="font-semibold mb-3 flex items-center">
+              <div className="border-t p-4 bg-muted/50 rounded-b-lg animate-fade-in">
+                <h4 className="font-semibold mb-2 flex items-center text-primary">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Book Appointment
+                  Book a Fundi Appointment
                 </h4>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Service (e.g., plumber)"
-                      value={bookingForm.service_category}
-                      onChange={(e) => setBookingForm(prev => ({ ...prev, service_category: e.target.value }))}
-                      className="text-sm"
-                    />
-                    <Input
-                      placeholder="Location"
-                      value={bookingForm.location}
-                      onChange={(e) => setBookingForm(prev => ({ ...prev, location: e.target.value }))}
-                      className="text-sm"
-                    />
+                <div className="space-y-4">
+                  {/* Service & Location */}
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Service Category</label>
+                    <div className="relative">
+                      <select
+                        value={bookingForm.service_category}
+                        onChange={e => setBookingForm(prev => ({ ...prev, service_category: e.target.value }))}
+                        className="w-full text-sm rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select service...</option>
+                        <option value="plumber">Plumber</option>
+                        <option value="electrician">Electrician</option>
+                        <option value="mechanic">Mechanic</option>
+                        <option value="cleaner">Cleaner</option>
+                        <option value="carpenter">Carpenter</option>
+                        <option value="general">General</option>
+                      </select>
+                      <Wrench className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {isBooking && !bookingForm.service_category && (
+                      <span className="text-xs text-destructive">Service is required</span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      type="date"
-                      value={bookingForm.date}
-                      onChange={(e) => setBookingForm(prev => ({ ...prev, date: e.target.value }))}
-                      className="text-sm"
-                    />
-                    <Input
-                      type="time"
-                      value={bookingForm.time}
-                      onChange={(e) => setBookingForm(prev => ({ ...prev, time: e.target.value }))}
-                      className="text-sm"
-                    />
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Location</label>
+                    <div className="relative">
+                      <select
+                        value={bookingForm.location}
+                        onChange={e => setBookingForm(prev => ({ ...prev, location: e.target.value }))}
+                        className="w-full text-sm rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select location...</option>
+                        <option value="Nairobi">Nairobi</option>
+                        <option value="Mombasa">Mombasa</option>
+                        <option value="Kisumu">Kisumu</option>
+                        <option value="Nakuru">Nakuru</option>
+                        <option value="Eldoret">Eldoret</option>
+                        <option value="Thika">Thika</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      <MapPin className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {isBooking && !bookingForm.location && (
+                      <span className="text-xs text-destructive">Location is required</span>
+                    )}
                   </div>
-                  <Input
-                    placeholder="Your name"
-                    value={bookingForm.client_name}
-                    onChange={(e) => setBookingForm(prev => ({ ...prev, client_name: e.target.value }))}
-                    className="text-sm"
-                  />
-                  <Input
-                    placeholder="Phone number"
-                    value={bookingForm.client_phone}
-                    onChange={(e) => setBookingForm(prev => ({ ...prev, client_phone: e.target.value }))}
-                    className="text-sm"
-                  />
-                  <Input
-                    placeholder="Description of work needed"
-                    value={bookingForm.description}
-                    onChange={(e) => setBookingForm(prev => ({ ...prev, description: e.target.value }))}
-                    className="text-sm"
-                  />
-                  <div className="flex space-x-2">
+                  {/* Date & Time */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Date</label>
+                      <Input
+                        type="date"
+                        value={bookingForm.date}
+                        onChange={e => setBookingForm(prev => ({ ...prev, date: e.target.value }))}
+                        className="text-sm"
+                        aria-label="Booking date"
+                      />
+                      {isBooking && !bookingForm.date && (
+                        <span className="text-xs text-destructive">Date is required</span>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Time</label>
+                      <Input
+                        type="time"
+                        value={bookingForm.time}
+                        onChange={e => setBookingForm(prev => ({ ...prev, time: e.target.value }))}
+                        className="text-sm"
+                        aria-label="Booking time"
+                      />
+                      {isBooking && !bookingForm.time && (
+                        <span className="text-xs text-destructive">Time is required</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Contact Info */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Your Name</label>
+                      <Input
+                        placeholder="Full name"
+                        value={bookingForm.client_name}
+                        onChange={e => setBookingForm(prev => ({ ...prev, client_name: e.target.value }))}
+                        className="text-sm"
+                        aria-label="Your name"
+                      />
+                      {isBooking && !bookingForm.client_name && (
+                        <span className="text-xs text-destructive">Name is required</span>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Phone Number</label>
+                      <Input
+                        placeholder="e.g. +2547XXXXXXXX"
+                        value={bookingForm.client_phone}
+                        onChange={e => setBookingForm(prev => ({ ...prev, client_phone: e.target.value }))}
+                        className="text-sm"
+                        aria-label="Phone number"
+                      />
+                      <span className="text-xs text-muted-foreground">Format: +2547XXXXXXXX</span>
+                      {isBooking && !bookingForm.client_phone && (
+                        <span className="text-xs text-destructive">Phone is required</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Description</label>
+                    <Input
+                      placeholder="Describe the work needed..."
+                      value={bookingForm.description}
+                      onChange={e => setBookingForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="text-sm"
+                      aria-label="Description"
+                    />
+                    <span className="text-xs text-muted-foreground">Be as detailed as possible for better service.</span>
+                    {isBooking && !bookingForm.description && (
+                      <span className="text-xs text-destructive">Description is required</span>
+                    )}
+                  </div>
+                  {/* Actions */}
+                  <div className="flex space-x-2 mt-2">
                     <Button
                       onClick={handleBookingSubmit}
                       disabled={isBooking}

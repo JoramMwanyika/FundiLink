@@ -24,7 +24,7 @@ export default function BookingPage() {
     time: "",
     description: "",
   })
-  const [availableFundis, setAvailableFundis] = useState([])
+  const [availableFundis, setAvailableFundis] = useState<any[]>([])
   const [selectedFundi, setSelectedFundi] = useState("")
   const [quotedPrice, setQuotedPrice] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -135,44 +135,44 @@ export default function BookingPage() {
   const selectedFundiData = availableFundis.find((f: any) => f._id === selectedFundi)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-background/80 border-b border-border/50 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center py-6">
             <Link href="/">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-primary">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 ml-4">Book a Service</h1>
+            <h1 className="text-2xl font-bold gradient-text ml-4">Book a Service</h1>
           </div>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {step === 1 && (
-          <Card>
+          <Card className="bg-card/80 border border-border/50 shadow-2xl shadow-primary/10 card-hover animate-fade-in">
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center gradient-text">
                 <Calendar className="h-5 w-5 mr-2" />
                 Service Details
               </CardTitle>
-              <CardDescription>Tell us what service you need and when you need it</CardDescription>
+              <CardDescription className="text-muted-foreground">Tell us what service you need and when you need it</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 text-foreground">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3 top-3 h-4 w-4 text-primary" />
                     <Input
                       id="name"
                       placeholder="Enter your full name"
                       value={formData.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
-                      className="pl-10"
+                      className="pl-10 input-glow"
                     />
                   </div>
                 </div>
@@ -180,13 +180,13 @@ export default function BookingPage() {
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-primary" />
                     <Input
                       id="phone"
                       placeholder="+254 XXX XXX XXX"
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
-                      className="pl-10"
+                      className="pl-10 input-glow"
                     />
                   </div>
                 </div>
@@ -195,97 +195,80 @@ export default function BookingPage() {
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
                   <Input
                     id="location"
-                    placeholder="e.g., Westlands, Nairobi"
+                    placeholder="e.g. Westlands, Nairobi"
                     value={formData.location}
                     onChange={(e) => handleInputChange("location", e.target.value)}
-                    className="pl-10"
+                    className="pl-10 input-glow"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Service Category</Label>
-                <Select
-                  value={formData.serviceCategory}
-                  onValueChange={(value) => handleInputChange("serviceCategory", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a service category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SERVICE_CATEGORIES.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        <div className="flex items-center">
-                          <span className="mr-2">{category.icon}</span>
-                          {category.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedCategory && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">
-                    {selectedCategory.icon} {selectedCategory.name}
-                  </h4>
-                  <p className="text-blue-700 text-sm mb-2">{selectedCategory.description}</p>
-                  <div className="text-sm text-blue-600">
-                    <strong>Examples:</strong> {selectedCategory.examples.join(", ")}
-                  </div>
-                </div>
-              )}
-
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Preferred Date</Label>
+                  <Label htmlFor="serviceCategory">Service Category</Label>
+                  <Select
+                    value={formData.serviceCategory}
+                    onValueChange={(value) => handleInputChange("serviceCategory", value)}
+                  >
+                    <SelectTrigger className="input-glow">
+                      <SelectValue placeholder="Select a service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id} className="text-foreground">
+                          {cat.icon} {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
                   <Input
                     id="date"
                     type="date"
                     value={formData.date}
                     onChange={(e) => handleInputChange("date", e.target.value)}
-                    min={new Date().toISOString().split("T")[0]}
+                    className="input-glow"
                   />
                 </div>
+              </div>
 
+              <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="time">Preferred Time</Label>
-                  <Select value={formData.time} onValueChange={(value) => handleInputChange("time", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 10 }, (_, i) => {
-                        const hour = 8 + i
-                        return (
-                          <SelectItem key={hour} value={`${hour}:00`}>
-                            {hour}:00 {hour < 12 ? "AM" : "PM"}
-                          </SelectItem>
-                        )
-                      })}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="time">Time</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={formData.time}
+                    onChange={(e) => handleInputChange("time", e.target.value)}
+                    className="input-glow"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe the work needed..."
+                    value={formData.description}
+                    onChange={(e) => handleInputChange("description", e.target.value)}
+                    className="input-glow"
+                  />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe the work you need done..."
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
-                  rows={3}
-                />
+              <div className="flex justify-end">
+                <Button
+                  onClick={searchFundis}
+                  disabled={loading}
+                  className="btn-glow px-8 py-3 text-lg"
+                >
+                  {loading ? "Searching..." : "Find Fundis"}
+                </Button>
               </div>
-
-              <Button onClick={searchFundis} disabled={loading} className="w-full" size="lg">
-                {loading ? "Searching..." : "Find Available Fundis"}
-              </Button>
             </CardContent>
           </Card>
         )}
