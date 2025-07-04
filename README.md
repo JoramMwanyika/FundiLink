@@ -1,5 +1,7 @@
 # FundiLink
 
+[Live Site: https://fundilink254.netlify.app](https://fundilink254.netlify.app)
+
 FundiLink is an AI-powered platform that connects clients with verified technicians ("fundis") for a wide range of services (plumbing, electrical, cleaning, carpentry, and more). The app features:
 
 - Modern, mobile-friendly UI/UX
