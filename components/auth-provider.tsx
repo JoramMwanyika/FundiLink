@@ -121,7 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("fundilink_user")
     localStorage.removeItem("fundilink_token")
     document.cookie = "fundilink_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    router.push("/")
+    if (user && user.role === "admin") {
+      router.push("/login")
+    } else {
+      router.push("/")
+    }
     window.location.reload()
   }
 

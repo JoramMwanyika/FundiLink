@@ -103,21 +103,22 @@ export default function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+      <div className="absolute inset-0 glow-effect"></div>
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="relative border-b border-border/50 backdrop-blur-sm bg-background/80 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">FundiLink Platform Management</p>
+              <h1 className="text-2xl font-bold gradient-text">Admin Dashboard</h1>
+              <p className="text-muted-foreground">FundiLink Platform Management</p>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="bg-transparent border-border/50">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </Button>
-              <Button variant="outline" size="sm" onClick={logout}>
+              <Button variant="outline" size="sm" onClick={logout} className="bg-transparent border-border/50">
                 Logout
               </Button>
             </div>
@@ -128,57 +129,54 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-card/80 border border-border/50 shadow-2xl shadow-primary/10 card-hover animate-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600" />
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalUsers}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          <Card>
+          <Card className="bg-card/80 border border-border/50 shadow-2xl shadow-primary/10 card-hover animate-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Settings className="h-6 w-6 text-green-600" />
+                <div className="p-2 bg-green-400/20 rounded-lg">
+                  <Settings className="h-6 w-6 text-green-500" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Fundis</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalFundis}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Active Fundis</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalFundis}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          <Card>
+          <Card className="bg-card/80 border border-border/50 shadow-2xl shadow-primary/10 card-hover animate-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Calendar className="h-6 w-6 text-purple-600" />
+                <div className="p-2 bg-purple-400/20 rounded-lg">
+                  <Calendar className="h-6 w-6 text-purple-500" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalBookings}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalBookings}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          <Card>
+          <Card className="bg-card/80 border border-border/50 shadow-2xl shadow-primary/10 card-hover animate-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-orange-600" />
+                <div className="p-2 bg-orange-400/20 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-orange-500" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completedBookings}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.completedBookings}</p>
                 </div>
               </div>
             </CardContent>
@@ -228,7 +226,7 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {filteredUsers.map((user) => (
-                      <div key={user._id} className="border rounded-lg p-4">
+                      <div key={user.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -253,7 +251,7 @@ export default function AdminDashboard() {
                                     .join(", ")}
                                 </div>
                               )}
-                              <div>Joined: {new Date(user.createdAt!).toLocaleDateString()}</div>
+                              <div>Joined: {new Date(user.created_at!).toLocaleDateString()}</div>
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -308,12 +306,12 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {filteredBookings.map((booking) => (
-                    <div key={booking._id} className="border rounded-lg p-4">
+                    <div key={booking.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-medium">
-                              {booking.clientName} → {booking.fundiName}
+                              {booking.client_name} → {booking.fundi_name}
                             </h4>
                             <Badge
                               className={
@@ -331,13 +329,13 @@ export default function AdminDashboard() {
                           </div>
                           <div className="space-y-1 text-sm text-gray-600">
                             <div>
-                              Service: {SERVICE_CATEGORIES.find((cat) => cat.id === booking.serviceCategory)?.name}
+                              Service: {SERVICE_CATEGORIES.find((cat) => cat.id === booking.service_category)?.name}
                             </div>
                             <div>
                               Date: {booking.date} at {booking.time}
                             </div>
                             <div>Location: {booking.location}</div>
-                            <div>Created: {new Date(booking.createdAt!).toLocaleDateString()}</div>
+                            <div>Created: {new Date(booking.created_at!).toLocaleDateString()}</div>
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -365,7 +363,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {SERVICE_CATEGORIES.map((category) => {
-                      const categoryBookings = bookings.filter((b) => b.serviceCategory === category.id).length
+                      const categoryBookings = bookings.filter((b) => b.service_category === category.id).length
                       const categoryFundis = users.filter((u) => u.categories?.includes(category.id)).length
 
                       return (
