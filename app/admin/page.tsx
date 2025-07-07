@@ -98,6 +98,7 @@ export default function AdminDashboard() {
     totalBookings: bookings.length,
     pendingBookings: bookings.filter((b) => b.status === "pending").length,
     completedBookings: bookings.filter((b) => b.status === "completed").length,
+    availableFundis: users.filter((u) => u.role === "fundi" && Array.isArray(u.availability) && u.availability.some((slot) => slot.available)).length,
   }
 
   if (!user) return null
@@ -128,7 +129,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-5 gap-6 mb-8">
           <Card className="bg-card/80 border border-border/50 shadow-2xl shadow-primary/10 card-hover animate-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -151,6 +152,19 @@ export default function AdminDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-muted-foreground">Active Fundis</p>
                   <p className="text-2xl font-bold text-foreground">{stats.totalFundis}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/80 border border-border/50 shadow-2xl shadow-primary/10 card-hover animate-fade-in">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-400/20 rounded-lg">
+                  <CheckCircle className="h-6 w-6 text-blue-500" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground">Available Fundis</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.availableFundis}</p>
                 </div>
               </div>
             </CardContent>

@@ -51,8 +51,10 @@ export function Chatbot() {
     client_phone: ''
   })
   const [isBooking, setIsBooking] = useState(false)
+  const [isScrolledUp, setIsScrolledUp] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
   const scrollToBottom = () => {
@@ -63,14 +65,28 @@ export function Chatbot() {
     scrollToBottom()
   }, [messages])
 
+  const handleScroll = () => {
+    if (!scrollAreaRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current
+    setIsScrolledUp(scrollTop + clientHeight < scrollHeight - 50)
+  }
+
   const addMessage = (role: 'user' | 'assistant', content: string) => {
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role,
-      content,
-      timestamp: new Date()
-    }
-    setMessages(prev => [...prev, newMessage])
+    setMessages(prev => {
+      if (role === 'assistant' && prev.length > 0 && prev[prev.length - 1].role === 'assistant' && prev[prev.length - 1].content === content) {
+        return prev
+      }
+      return [...prev, {
+        id: Date.now().toString(),
+        role,
+        content,
+        timestamp: new Date()
+      }]
+    })
+  }
+
+  const showBookingFormOnce = () => {
+    setShowBookingForm(prev => prev ? true : true)
   }
 
   const sendMessage = async () => {
@@ -82,7 +98,7 @@ export function Chatbot() {
     setIsLoading(true)
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('fundilink_token') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('fundilink_token') : null
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: {
@@ -103,10 +119,7 @@ export function Chatbot() {
       if (data.success) {
         addMessage('assistant', data.response)
         
-        // Check if the response suggests booking
-        if (data.response.toLowerCase().includes('book') || 
-            data.response.toLowerCase().includes('appointment') ||
-            data.response.toLowerCase().includes('schedule')) {
+        if ((data.response.toLowerCase().includes('book') || data.response.toLowerCase().includes('appointment') || data.response.toLowerCase().includes('schedule')) && !showBookingForm) {
           setShowBookingForm(true)
         }
       } else {
@@ -135,7 +148,7 @@ export function Chatbot() {
     setIsBooking(true)
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('fundilink_token') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('fundilink_token') : null
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: {
@@ -192,6 +205,18 @@ export function Chatbot() {
     })
   }
 
+  const clearChat = () => {
+    setMessages([
+      {
+        id: '1',
+        role: 'assistant',
+        content: 'Hello! I\'m FundiLink, your AI assistant. I can help you find skilled technicians (fundis) and book appointments. What service do you need today?',
+        timestamp: new Date()
+      }
+    ])
+    setShowBookingForm(false)
+  }
+
   if (!user) return null
 
   return (
@@ -201,45 +226,50 @@ export function Chatbot() {
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg"
         size="icon"
+        aria-label={isOpen ? 'Close chatbot' : 'Open chatbot'}
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </Button>
 
       {/* Chatbot Window */}
       {isOpen && (
-        <Card className="fixed bottom-20 right-4 z-40 w-96 h-[500px] shadow-xl border-2">
-          <CardHeader className="pb-3 bg-primary text-primary-foreground">
+        <Card
+          className="fixed bottom-0 right-0 md:bottom-20 md:right-4 z-40 w-full md:w-96 max-w-full h-full md:h-[500px] shadow-xl border-2 chatbot-window animate-fade-in flex flex-col md:rounded-lg rounded-none"
+          style={{ maxHeight: '100dvh' }}
+        >
+          <CardHeader className="pb-3 bg-primary text-primary-foreground chatbot-drag-handle cursor-move rounded-t-lg md:rounded-t-lg rounded-none">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Bot className="h-5 w-5" />
                 <CardTitle className="text-lg">FundiLink Assistant</CardTitle>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-                className="text-primary-foreground hover:bg-primary-foreground/20"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={clearChat} className="text-primary-foreground hover:bg-primary-foreground/20" aria-label="Clear chat">
+                  <span className="text-xs">Clear</span>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-primary-foreground hover:bg-primary-foreground/20" aria-label="Close chatbot">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+            <div className="text-xs mt-1 opacity-80">Welcome to FundiLink! Ask me anything about finding or booking a fundi.</div>
           </CardHeader>
-
-          <CardContent className="p-0 h-full flex flex-col">
+          <CardContent className="p-0 flex-1 flex flex-col h-full min-h-0">
             {/* Messages Area */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {messages.map((message) => (
+            <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollAreaRef} onScroll={handleScroll}>
+              <div className="space-y-4 pb-4 md:pb-0">
+                {messages.map((message, idx) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
+                      className={`max-w-[80%] rounded-2xl p-3 shadow-md transition-all duration-200 ${
                         message.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground self-end'
+                          : 'bg-muted/80 text-foreground self-start border border-border/30'
                       }`}
+                      style={{ animationDelay: `${idx * 30}ms` }}
                     >
                       <div className="flex items-start space-x-2">
                         {message.role === 'assistant' && (
@@ -259,7 +289,7 @@ export function Chatbot() {
                   </div>
                 ))}
                 {isLoading && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start animate-fade-in">
                     <div className="bg-muted rounded-lg p-3">
                       <div className="flex items-center space-x-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -270,16 +300,26 @@ export function Chatbot() {
                 )}
                 <div ref={messagesEndRef} />
               </div>
+              {isScrolledUp && (
+                <Button
+                  className="fixed bottom-32 right-8 z-50 animate-fade-in"
+                  size="sm"
+                  onClick={scrollToBottom}
+                  variant="secondary"
+                >
+                  Scroll to latest
+                </Button>
+              )}
             </ScrollArea>
 
             {/* Booking Form */}
             {showBookingForm && (
-              <div className="border-t p-4 bg-muted/50 rounded-b-lg animate-fade-in">
+              <div className="border-t p-4 bg-muted/50 rounded-b-lg animate-fade-in flex flex-col max-h-[60vh] md:max-h-[300px]">
                 <h4 className="font-semibold mb-2 flex items-center text-primary">
                   <Calendar className="h-4 w-4 mr-2" />
                   Book a Fundi Appointment
                 </h4>
-                <div className="space-y-4">
+                <div className="space-y-4 overflow-y-auto flex-1 pr-1">
                   {/* Service & Location */}
                   <div>
                     <label className="block text-xs font-medium mb-1">Service Category</label>
@@ -400,38 +440,38 @@ export function Chatbot() {
                       <span className="text-xs text-destructive">Description is required</span>
                     )}
                   </div>
-                  {/* Actions */}
-                  <div className="flex space-x-2 mt-2">
-                    <Button
-                      onClick={handleBookingSubmit}
-                      disabled={isBooking}
-                      className="flex-1 text-sm"
-                      size="sm"
-                    >
-                      {isBooking ? (
-                        <>
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Booking...
-                        </>
-                      ) : (
-                        'Book Now'
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowBookingForm(false)}
-                      className="text-sm"
-                      size="sm"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
+                </div>
+                {/* Actions */}
+                <div className="flex space-x-2 mt-2 pt-2 bg-muted/80 sticky bottom-0 z-10">
+                  <Button
+                    onClick={handleBookingSubmit}
+                    disabled={isBooking}
+                    className="flex-1 text-sm"
+                    size="sm"
+                  >
+                    {isBooking ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Booking...
+                      </>
+                    ) : (
+                      'Book Now'
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowBookingForm(false)}
+                    className="text-sm"
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
             )}
 
             {/* Input Area */}
-            <div className="border-t p-4">
+            <div className="border-t p-4 bg-background/80 sticky bottom-0 z-50 flex-shrink-0">
               <div className="flex space-x-2">
                 <Input
                   placeholder="Type your message..."
@@ -445,6 +485,8 @@ export function Chatbot() {
                   onClick={sendMessage}
                   disabled={isLoading || !inputMessage.trim()}
                   size="icon"
+                  className="shrink-0"
+                  aria-label="Send message"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

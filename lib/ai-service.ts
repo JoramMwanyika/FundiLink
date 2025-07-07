@@ -1,4 +1,5 @@
 import { createServerClient } from './supabase';
+import { addDays, format, isToday, isTomorrow, parse, setHours, setMinutes } from 'date-fns';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -52,22 +53,28 @@ class AIService {
                              lastMessage.includes('technician');
 
     if (isSearchingFundis) {
-      // Extract service category and location from the message
+      // Extract service category, date, and time from the message or context
       const serviceCategory = this.extractServiceCategory(lastMessage);
-      const location = this.extractLocation(lastMessage);
-      
-      if (serviceCategory && location) {
-        const fundis = await this.searchFundis(serviceCategory, location);
-        
+      // Try to get date/time from context, or parse from message
+      let date = context?.date || undefined;
+      let time = context?.time || undefined;
+      if (!date || !time) {
+        const parsed = this.parseDateTimeFromMessage(lastMessage);
+        if (parsed.date) date = parsed.date;
+        if (parsed.time) time = parsed.time;
+      }
+      if (serviceCategory && date && time) {
+        const fundis = await this.searchFundis(serviceCategory, date, time);
         if (fundis.length > 0) {
           const fundiList = fundis.map(fundi => 
             `• ${fundi.name} - ${fundi.categories.join(', ')} - ${fundi.location} (Rating: ${fundi.rating}/5)`
           ).join('\n');
-          
-          return `I found ${fundis.length} available ${serviceCategory} fundis in ${location}:\n\n${fundiList}\n\nWould you like to book an appointment with one of these fundis? I can help you schedule a visit.`;
+          return `I found ${fundis.length} available ${serviceCategory} fundis for ${date} at ${time}:\n\n${fundiList}\n\nWould you like to book an appointment with one of these fundis? I can help you schedule a visit.`;
         } else {
-          return `I couldn't find any available ${serviceCategory} fundis in ${location} at the moment. Would you like me to search in nearby areas or suggest alternative services?`;
+          return `I couldn't find any available ${serviceCategory} fundis for ${date} at ${time}. Would you like to try a different time or service?`;
         }
+      } else {
+        return 'Please provide the service category, date, and time you need a fundi for.';
       }
     }
 
@@ -157,24 +164,89 @@ Respond in a helpful, conversational manner. If you need to search for fundis or
     return null;
   }
 
-  async searchFundis(serviceCategory: string, location: string): Promise<FundiInfo[]> {
+  // Helper to auto-generate availability slots for the next 7 days, 9am-5pm
+  private generateDefaultAvailability(): any[] {
+    const slots = [];
+    const now = new Date();
+    for (let d = 0; d < 7; d++) {
+      const date = addDays(now, d);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      for (let h = 9; h <= 17; h++) {
+        const timeStr = `${h.toString().padStart(2, '0')}:00`;
+        slots.push({ date: dateStr, time: timeStr, available: true });
+      }
+    }
+    return slots;
+  }
+
+  // Helper to parse date and time from a message
+  private parseDateTimeFromMessage(message: string): { date?: string, time?: string } {
+    const now = new Date();
+    let date: string | undefined;
+    let time: string | undefined;
+    const lower = message.toLowerCase();
+
+    // Date parsing
+    if (lower.includes('tomorrow')) {
+      date = format(addDays(now, 1), 'yyyy-MM-dd');
+    } else if (lower.includes('today')) {
+      date = format(now, 'yyyy-MM-dd');
+    } else {
+      // Check for weekday names
+      const weekdays = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      for (let i = 0; i < weekdays.length; i++) {
+        if (lower.includes(weekdays[i])) {
+          // Find next occurrence of this weekday
+          const dayDiff = (i + 7 - now.getDay()) % 7 || 7;
+          date = format(addDays(now, dayDiff), 'yyyy-MM-dd');
+          break;
+        }
+      }
+    }
+
+    // Time parsing (e.g. 2pm, 10:00, 14:00)
+    const timeMatch = lower.match(/(\d{1,2})(:|\s)?(\d{2})?\s?(am|pm)?/);
+    if (timeMatch) {
+      let hour = parseInt(timeMatch[1], 10);
+      let minute = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+      const ampm = timeMatch[4];
+      if (ampm === 'pm' && hour < 12) hour += 12;
+      if (ampm === 'am' && hour === 12) hour = 0;
+      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+        time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      }
+    }
+    return { date, time };
+  }
+
+  async searchFundis(serviceCategory: string, date: string, time: string): Promise<FundiInfo[]> {
     try {
       const supabase = createServerClient();
-      
       const { data: fundis, error } = await supabase
-        .from('fundis')
-        .select('id, name, categories, location, rating, is_verified, phone')
+        .from('users')
+        .select('id, name, categories, location, rating, is_verified, phone, availability')
+        .eq('role', 'fundi')
         .eq('is_verified', true)
-        .eq('available', true)
-        .contains('categories', [serviceCategory])
-        .ilike('location', `%${location}%`);
+        .contains('categories', [serviceCategory]);
 
       if (error) {
         console.error('Error searching fundis:', error);
         return [];
       }
 
-      return fundis || [];
+      // Auto-generate availability if missing
+      const fundisWithAvailability = (fundis || []).map(fundi => {
+        if (!Array.isArray(fundi.availability) || fundi.availability.length === 0) {
+          return { ...fundi, availability: this.generateDefaultAvailability() };
+        }
+        return fundi;
+      });
+
+      // Filter by availability for the requested date and time
+      return fundisWithAvailability.filter(fundi =>
+        Array.isArray(fundi.availability) &&
+        fundi.availability.some(slot => slot.date === date && slot.time === time && slot.available)
+      );
     } catch (error) {
       console.error('Error in searchFundis:', error);
       return [];
@@ -184,22 +256,40 @@ Respond in a helpful, conversational manner. If you need to search for fundis or
   async createBooking(bookingData: BookingRequest): Promise<{ success: boolean; message: string; bookingId?: string }> {
     try {
       const supabase = createServerClient();
-      
-      // First, find a fundi for the service
-      const { data: fundi, error: fundiError } = await supabase
-        .from('fundis')
-        .select('id, name')
+      // Find a fundi for the service and availability
+      const { data: fundis, error: fundiError } = await supabase
+        .from('users')
+        .select('id, name, availability')
+        .eq('role', 'fundi')
         .eq('is_verified', true)
-        .eq('available', true)
-        .contains('categories', [bookingData.service_category])
-        .ilike('location', `%${bookingData.location}%`)
-        .limit(1)
-        .single();
+        .contains('categories', [bookingData.service_category]);
 
-      if (fundiError || !fundi) {
+      if (fundiError || !fundis || fundis.length === 0) {
         return {
           success: false,
-          message: 'No available fundis found for this service and location.'
+          message: 'No available fundis found for this service.'
+        };
+      }
+
+      // Find a fundi with an available slot for the requested date and time
+      const fundi = fundis.find(f =>
+        Array.isArray(f.availability) &&
+        f.availability.some(slot => slot.date === bookingData.date && slot.time === bookingData.time && slot.available)
+      );
+
+      if (!fundi) {
+        return {
+          success: false,
+          message: 'No fundis available for the requested date and time.'
+        };
+      }
+
+      // Double-check the slot is still available (prevent race condition)
+      const slotAvailable = Array.isArray(fundi.availability) && fundi.availability.some(slot => slot.date === bookingData.date && slot.time === bookingData.time && slot.available);
+      if (!slotAvailable) {
+        return {
+          success: false,
+          message: 'Sorry, this slot was just booked by someone else. Please try another time.'
         };
       }
 
@@ -212,7 +302,7 @@ Respond in a helpful, conversational manner. If you need to search for fundis or
           client_name: bookingData.client_name,
           fundi_name: fundi.name,
           service_category: bookingData.service_category,
-          location: bookingData.location,
+          location: bookingData.location || '',
           date: bookingData.date,
           time: bookingData.time,
           status: 'pending',
@@ -227,6 +317,21 @@ Respond in a helpful, conversational manner. If you need to search for fundis or
           success: false,
           message: 'Failed to create booking. Please try again.'
         };
+      }
+
+      // Mark the slot as unavailable in the fundi's availability array
+      const updatedAvailability = (fundi.availability || []).map((slot: any) =>
+        slot.date === bookingData.date && slot.time === bookingData.time
+          ? { ...slot, available: false }
+          : slot
+      );
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ availability: updatedAvailability })
+        .eq('id', fundi.id);
+      if (updateError) {
+        console.error('Error updating fundi availability:', updateError);
+        // Not a blocker for booking, but should be logged
       }
 
       return {
