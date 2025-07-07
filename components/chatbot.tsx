@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { MessageCircle, X, Send, Bot, User, Loader2, Calendar, MapPin, Wrench } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/components/auth-provider'
+import type { Booking } from '@/lib/models'
 
 interface ChatMessage {
   id: string
@@ -52,6 +53,8 @@ export function Chatbot() {
   })
   const [isBooking, setIsBooking] = useState(false)
   const [isScrolledUp, setIsScrolledUp] = useState(false)
+  const [fundiBookings, setFundiBookings] = useState<Booking[]>([])
+  const [showAppointments, setShowAppointments] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -217,6 +220,17 @@ export function Chatbot() {
     setShowBookingForm(false)
   }
 
+  // Fetch fundi bookings if user is fundi
+  useEffect(() => {
+    if (user && user.role === 'fundi') {
+      fetch(`/api/bookings?userId=${user.id}&role=fundi`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) setFundiBookings(data.bookings)
+        })
+    }
+  }, [user])
+
   if (!user) return null
 
   return (
@@ -253,67 +267,101 @@ export function Chatbot() {
               </div>
             </div>
             <div className="text-xs mt-1 opacity-80">Welcome to FundiLink! Ask me anything about finding or booking a fundi.</div>
+            {user && user.role === 'fundi' && (
+              <Button
+                className="mt-2 text-xs bg-white/10 hover:bg-white/20 text-primary-foreground border border-white/20"
+                size="sm"
+                onClick={() => setShowAppointments((v) => !v)}
+              >
+                {showAppointments ? 'Hide My Appointments' : 'Show My Appointments'}
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="p-0 flex-1 flex flex-col h-full min-h-0">
-            {/* Messages Area */}
-            <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollAreaRef} onScroll={handleScroll}>
-              <div className="space-y-4 pb-4 md:pb-0">
-                {messages.map((message, idx) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-2xl p-3 shadow-md transition-all duration-200 ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground self-end'
-                          : 'bg-muted/80 text-foreground self-start border border-border/30'
-                      }`}
-                      style={{ animationDelay: `${idx * 30}ms` }}
-                    >
-                      <div className="flex items-start space-x-2">
-                        {message.role === 'assistant' && (
-                          <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {formatTime(message.timestamp)}
-                          </p>
-                        </div>
-                        {message.role === 'user' && (
-                          <User className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start animate-fade-in">
-                    <div className="bg-muted rounded-lg p-3">
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Typing...</span>
-                      </div>
-                    </div>
-                  </div>
+            {/* Fundi Appointments */}
+            {user && user.role === 'fundi' && showAppointments && (
+              <div className="p-4 overflow-y-auto flex-1">
+                <h4 className="font-semibold mb-2 flex items-center text-primary">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  My Appointments
+                </h4>
+                {fundiBookings.length === 0 ? (
+                  <div className="text-muted-foreground">No appointments found.</div>
+                ) : (
+                  <ul className="space-y-2">
+                    {fundiBookings.map((b) => (
+                      <li key={b.id} className="bg-muted/60 rounded p-2 border border-border/20">
+                        <div className="font-medium">{b.service_category} - {b.status}</div>
+                        <div className="text-xs">{b.date} at {b.time}</div>
+                        <div className="text-xs">Client: {b.client_name}</div>
+                        <div className="text-xs">Location: {b.location}</div>
+                        <div className="text-xs">Description: {b.description}</div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-                <div ref={messagesEndRef} />
               </div>
-              {isScrolledUp && (
-                <Button
-                  className="fixed bottom-32 right-8 z-50 animate-fade-in"
-                  size="sm"
-                  onClick={scrollToBottom}
-                  variant="secondary"
-                >
-                  Scroll to latest
-                </Button>
-              )}
-            </ScrollArea>
-
-            {/* Booking Form */}
-            {showBookingForm && (
+            )}
+            {/* Messages Area */}
+            {!showAppointments && (
+              <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollAreaRef} onScroll={handleScroll}>
+                <div className="space-y-4 pb-4 md:pb-0">
+                  {messages.map((message, idx) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-2xl p-3 shadow-md transition-all duration-200 ${
+                          message.role === 'user'
+                            ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground self-end'
+                            : 'bg-muted/80 text-foreground self-start border border-border/30'
+                        }`}
+                        style={{ animationDelay: `${idx * 30}ms` }}
+                      >
+                        <div className="flex items-start space-x-2">
+                          {message.role === 'assistant' && (
+                            <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {formatTime(message.timestamp)}
+                            </p>
+                          </div>
+                          {message.role === 'user' && (
+                            <User className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start animate-fade-in">
+                      <div className="bg-muted rounded-lg p-3">
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Typing...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+                {isScrolledUp && (
+                  <Button
+                    className="fixed bottom-32 right-8 z-50 animate-fade-in"
+                    size="sm"
+                    onClick={scrollToBottom}
+                    variant="secondary"
+                  >
+                    Scroll to latest
+                  </Button>
+                )}
+              </ScrollArea>
+            )}
+            {/* Booking Form (only for non-fundi users) */}
+            {user && user.role !== 'fundi' && showBookingForm && (
               <div className="border-t p-4 bg-muted/50 rounded-b-lg animate-fade-in flex flex-col max-h-[60vh] md:max-h-[300px]">
                 <h4 className="font-semibold mb-2 flex items-center text-primary">
                   <Calendar className="h-4 w-4 mr-2" />
@@ -469,7 +517,6 @@ export function Chatbot() {
                 </div>
               </div>
             )}
-
             {/* Input Area */}
             <div className="border-t p-4 bg-background/80 sticky bottom-0 z-50 flex-shrink-0">
               <div className="flex space-x-2">
